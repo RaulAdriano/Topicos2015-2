@@ -2,6 +2,8 @@ package br.grupointegrado.SpaceInvaders;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -14,6 +16,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Image;
+import com.badlogic.gdx.scenes.scene2d.ui.ImageTextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.SpriteDrawable;
 import com.badlogic.gdx.utils.Array;
@@ -33,6 +36,7 @@ public class TelaJogo extends TelaBase {
     private Stage palco;
     private Stage palcoInformacoes;
     private BitmapFont fonte;
+    private BitmapFont fonteBotoes;
     private Label lbPontuacao;
     private Label lbGameOver;
     private Image jogador;
@@ -47,11 +51,19 @@ public class TelaJogo extends TelaBase {
 
     private Texture texturaMeteoro1;
     private Texture texturaMeteoro2;
+    private Texture texturaBotao;
+    private  Texture texturaBotaoPressionado;
     private Array<Image> meteoros1 = new Array<Image>();
     private Array<Image> meteoros2 = new Array<Image>();
 
     private Array<Texture> texturesExplosao  = new Array<Texture>();
     private Array<Explosao> explosoes = new Array<Explosao>();
+
+
+    private Sound somTiro;
+    private Sound somExplosao;
+    private Sound somGameOver;
+    private Music  musicaFundo;
 
 
     /**
@@ -64,7 +76,7 @@ public class TelaJogo extends TelaBase {
 
 
     /**
-     * Chamado quando a tela é exibida
+     * Chamado quando a tela ï¿½ exibida
      */
     @Override
     public void show() {
@@ -73,11 +85,33 @@ public class TelaJogo extends TelaBase {
         palco = new Stage(new FillViewport(camera.viewportWidth, camera.viewportHeight, camera));
         palcoInformacoes = new Stage(new FillViewport(camera.viewportWidth, camera.viewportHeight, camera));
 
+
+        initSons();
         initTexturas();
         initFont();
         initInformacoes();
         initJogador();
+        initBotoes();
 
+    }
+
+    private void initBotoes() {
+        texturaBotao = new Texture("buttons/button.png");
+        texturaBotaoPressionado = new Texture("buttons/button-down.png");
+
+        ImageTextButton.ImageTextButtonStyle estilo = new ImageTextButton.ImageTextButtonStyle();
+
+        estilo.font = fonteBotoes;
+        estilo.up = new SpriteDrawable(new Sprite(texturaBotao));
+        estilo.down = new SpriteDrawable( new Sprite(texturaBotaoPressionado));
+    }
+
+    private void initSons() {
+        somTiro = Gdx.audio.newSound(Gdx.files.internal("sounds/shoot.mp3"));
+        somExplosao = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
+        somGameOver = Gdx.audio.newSound(Gdx.files.internal("sounds/gameOver.mp3"));
+        musicaFundo = Gdx.audio.newMusic(Gdx.files.internal("sounds/background.mp3"));
+        musicaFundo.setLooping(true);
     }
 
     private void initTexturas() {
@@ -112,7 +146,7 @@ public class TelaJogo extends TelaBase {
     }
 
     /**
-     * instancia as informações escritas na tela
+     * instancia as informaï¿½ï¿½es escritas na tela
      */
     private void initInformacoes() {
         Label.LabelStyle lbEstilo = new Label.LabelStyle();
@@ -144,12 +178,18 @@ public class TelaJogo extends TelaBase {
 
         fonte = generator.generateFont(param);
 
+        param = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        param.size = 32;
+        param.color = Color.BLACK;
+
+        fonteBotoes =  generator.generateFont(param);
+
         generator.dispose();
     }
 
 
     /**
-     * Chamado a todo quadro de atualização do jogo ( FPS )
+     * Chamado a todo quadro de atualizaï¿½ï¿½o do jogo ( FPS )
      * @param delta - tempo um quadro e outro (em segundos)
      */
     @Override
@@ -159,11 +199,13 @@ public class TelaJogo extends TelaBase {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         lbPontuacao.setPosition(10, camera.viewportHeight - 40);
-        lbGameOver.setPosition(camera.viewportWidth/2-lbGameOver.getWidth()/2 ,camera.viewportHeight/2);
+        lbGameOver.setPosition(camera.viewportWidth / 2 - lbGameOver.getWidth() / 2, camera.viewportHeight / 2);
         lbGameOver.setVisible(gameOver == true);
 
         atualizarExplosoes(delta);
         if(gameOver==false) {
+            if (!musicaFundo.isPlaying()) //se nao estiver tocando
+                    musicaFundo.play();// inicia a musica
 
             capturaTeclas();
             atualizarJogador(delta);
@@ -174,10 +216,13 @@ public class TelaJogo extends TelaBase {
 
             updatePontos();
 
+        }else{
+            if(musicaFundo.isPlaying())// se esta tocando
+                musicaFundo.stop();// parar musica
         }
 
 
-        // Atualiza a situação do palco
+        // Atualiza a situaï¿½ï¿½o do palco
         palco.act(delta);
         //desenha o palco na tela
         palco.draw();
@@ -229,6 +274,7 @@ public class TelaJogo extends TelaBase {
                     meteoros.removeValue(meteoro, true); // remove da lista
 
                     criarExplosao(meteoro.getX(), meteoro.getY());
+                    somGameOver.play();
                 }
             }
 
@@ -251,10 +297,12 @@ public class TelaJogo extends TelaBase {
 
         Image ator = new Image(texturesExplosao.get(0));
         ator.setPosition(x,y);
+        ator.setPosition(x - ator.getWidth() / 2 , y - ator.getHeight()/ 2);
         palco.addActor(ator);
 
         Explosao explosao = new Explosao(ator, texturesExplosao);
         explosoes.add(explosao);
+        somExplosao.play();
 
     }
 
@@ -263,7 +311,7 @@ public class TelaJogo extends TelaBase {
 
 
         if (quantidadeMeteoros < 25) {
-            int tipo = MathUtils.random(1, 6); //retorna 1 ou 2 aleatóriamente
+            int tipo = MathUtils.random(1, 6); //retorna 1 ou 2 aleatï¿½riamente
             if (tipo == 1) {
                 //cria meteoro 1
                 Image meteoro = new Image(texturaMeteoro1);
@@ -324,6 +372,7 @@ public class TelaJogo extends TelaBase {
                 tiros.add(tiro);
                 palco.addActor(tiro);
                 intervaloTiros = 0;
+                somTiro.play();
             }
         }
 
@@ -378,7 +427,7 @@ public class TelaJogo extends TelaBase {
     }
 
     /**
-     * verifica se as teclas estão pressionadas
+     * verifica se as teclas estï¿½o pressionadas
      */
     private void capturaTeclas() {
         indoDireita = false;
@@ -397,7 +446,7 @@ public class TelaJogo extends TelaBase {
     }
 
     /**
-     * é chamado sempre que há uma alteração no tamanho da tela
+     * ï¿½ chamado sempre que hï¿½ uma alteraï¿½ï¿½o no tamanho da tela
      * @param width -  novo valor de largura da tela
      * @param height-  novo valor de altura da tela
      */
@@ -409,7 +458,7 @@ public class TelaJogo extends TelaBase {
 
 
     /**
-     * é chamado sempre que o jogo foi minimizado
+     * ï¿½ chamado sempre que o jogo foi minimizado
      */
     @Override
     public void pause() {
@@ -417,7 +466,7 @@ public class TelaJogo extends TelaBase {
     }
 
     /**
-     * é chamado sempre que o jogo voltar para o primeiro plano
+     * ï¿½ chamado sempre que o jogo voltar para o primeiro plano
      */
     @Override
     public void resume() {
@@ -425,7 +474,7 @@ public class TelaJogo extends TelaBase {
     }
 
     /**
-     * é chamado quando a tela for destruida
+     * ï¿½ chamado quando a tela for destruida
      */
     @Override
     public void dispose() {
@@ -437,6 +486,10 @@ public class TelaJogo extends TelaBase {
         texturaJogador.dispose();
         texturaTiro.dispose();
         texturaMeteoro1.dispose();
+        somTiro.dispose();
+        somExplosao.dispose();
+        somGameOver.dispose();
+        musicaFundo.dispose();
         texturaMeteoro2.dispose();
         for(Texture text : texturesExplosao){
             text.dispose();
