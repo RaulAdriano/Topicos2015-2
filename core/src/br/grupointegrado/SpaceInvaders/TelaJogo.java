@@ -2,6 +2,7 @@ package br.grupointegrado.SpaceInvaders;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
@@ -36,7 +37,7 @@ public class TelaJogo extends TelaBase {
     private Stage palco;
     private Stage palcoInformacoes;
     private BitmapFont fonte;
-    private BitmapFont fonteBotoes;
+
     private Label lbPontuacao;
     private Label lbGameOver;
     private Image jogador;
@@ -51,13 +52,13 @@ public class TelaJogo extends TelaBase {
 
     private Texture texturaMeteoro1;
     private Texture texturaMeteoro2;
-    private Texture texturaBotao;
-    private  Texture texturaBotaoPressionado;
+
     private Array<Image> meteoros1 = new Array<Image>();
     private Array<Image> meteoros2 = new Array<Image>();
 
     private Array<Texture> texturesExplosao  = new Array<Texture>();
     private Array<Explosao> explosoes = new Array<Explosao>();
+
 
 
     private Sound somTiro;
@@ -86,25 +87,16 @@ public class TelaJogo extends TelaBase {
         palcoInformacoes = new Stage(new FillViewport(camera.viewportWidth, camera.viewportHeight, camera));
 
 
+
         initSons();
         initTexturas();
         initFont();
         initInformacoes();
         initJogador();
-        initBotoes();
 
     }
 
-    private void initBotoes() {
-        texturaBotao = new Texture("buttons/button.png");
-        texturaBotaoPressionado = new Texture("buttons/button-down.png");
 
-        ImageTextButton.ImageTextButtonStyle estilo = new ImageTextButton.ImageTextButtonStyle();
-
-        estilo.font = fonteBotoes;
-        estilo.up = new SpriteDrawable(new Sprite(texturaBotao));
-        estilo.down = new SpriteDrawable( new Sprite(texturaBotaoPressionado));
-    }
 
     private void initSons() {
         somTiro = Gdx.audio.newSound(Gdx.files.internal("sounds/shoot.mp3"));
@@ -146,9 +138,10 @@ public class TelaJogo extends TelaBase {
     }
 
     /**
-     * instancia as informa��es escritas na tela
+     * instancia as informacoes escritas na tela
      */
     private void initInformacoes() {
+
         Label.LabelStyle lbEstilo = new Label.LabelStyle();
         lbEstilo.font = fonte;
         lbEstilo.fontColor = Color.WHITE;
@@ -178,11 +171,6 @@ public class TelaJogo extends TelaBase {
 
         fonte = generator.generateFont(param);
 
-        param = new FreeTypeFontGenerator.FreeTypeFontParameter();
-        param.size = 32;
-        param.color = Color.BLACK;
-
-        fonteBotoes =  generator.generateFont(param);
 
         generator.dispose();
     }
@@ -219,6 +207,8 @@ public class TelaJogo extends TelaBase {
         }else{
             if(musicaFundo.isPlaying())// se esta tocando
                 musicaFundo.stop();// parar musica
+
+            reiniciarJogo();
         }
 
 
@@ -230,6 +220,22 @@ public class TelaJogo extends TelaBase {
         palcoInformacoes.act(delta);
         palcoInformacoes.draw();
 
+
+    }
+
+    private void reiniciarJogo() {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)){
+
+            Preferences preferencias = Gdx.app.getPreferences("SpaceInvaders");
+            int  PontuacaoMaxima = preferencias.getInteger("pontuacaoMaxima",0);
+
+            if (pontuacao> PontuacaoMaxima){
+                preferencias.putInteger("pontuacaoMaxima",pontuacao);
+                preferencias.flush();
+            }
+
+            game.setScreen(new TelaMenu(game));
+        }
 
     }
 
@@ -339,7 +345,8 @@ public class TelaJogo extends TelaBase {
 
             if (meteoro.getY()+meteoro.getHeight() < 0 ){
                 meteoro.remove(); //remove do palco
-                meteoros1.removeValue(meteoro,true); // remove da lista
+                meteoros1.removeValue(meteoro, true); // remove da lista
+                pontuacao -= 30;
             }
         }
 
@@ -351,6 +358,7 @@ public class TelaJogo extends TelaBase {
             if (meteoro.getY()+meteoro.getHeight() < 0 ){
                 meteoro.remove(); //remove do palco
                 meteoros2.removeValue(meteoro,true); // remove da lista
+                pontuacao -= 60;
             }
         }
 
@@ -494,5 +502,6 @@ public class TelaJogo extends TelaBase {
         for(Texture text : texturesExplosao){
             text.dispose();
         }
+
     }
 }
