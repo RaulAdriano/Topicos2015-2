@@ -33,9 +33,11 @@ public class TelaMenu extends TelaBase {
     private ImageTextButton btIniciar;
     private Label lbTitulo;
     private Label lbPontuacao;
+    private Label lbNome;
     private BitmapFont fonteBotoes;
     private BitmapFont fontTitulo;
     private BitmapFont fontBotoes;
+    private  BitmapFont fonteNome;
 
 
     private Texture texturaBotao;
@@ -100,6 +102,11 @@ public class TelaMenu extends TelaBase {
 
         lbPontuacao = new Label("Pontuação : " + PontuacaoMaxima + " pontos" , estilo);
         palco.addActor(lbPontuacao);
+
+        estilo = new Label.LabelStyle();
+        estilo.font = fonteNome;
+        lbNome = new Label("Desenvolvido por Raul Adriano Ramos",estilo);
+        palco.addActor(lbNome);
     }
 
     private void initFonts() {
@@ -109,26 +116,31 @@ public class TelaMenu extends TelaBase {
         FreeTypeFontGenerator.FreeTypeFontParameter params =
                 new FreeTypeFontGenerator.FreeTypeFontParameter();
         params.size = 48 ;
-        params.color = new Color(.25f,.25f,.85f,1);
+        params.color = new Color(255,255,255,1);
         params.shadowOffsetX = 2;
         params.shadowOffsetY = 2;
         params.shadowColor = Color.BLACK;
 
         fontTitulo = gerador.generateFont(params);
 
+
         fontBotoes = gerador.generateFont(params);
 
         params = new FreeTypeFontGenerator.FreeTypeFontParameter();
         params.size = 32;
-        params.color = Color.BLACK;
+        params.color = Color.WHITE;
 
         fonteBotoes =  gerador.generateFont(params);
+
+        params.size = 25;
+        fonteNome = gerador.generateFont(params);
+
         gerador.dispose();
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(1f,1f,1f,1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         atulizarLabels();
@@ -184,6 +196,8 @@ public class TelaMenu extends TelaBase {
     public void dispose() {
         palco.dispose();
         fontTitulo.dispose();
+        texturaBotao.dispose();
+        texturaBotaoPressionado.dispose();
 
     }
 }

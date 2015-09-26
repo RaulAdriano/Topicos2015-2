@@ -103,7 +103,7 @@ public class TelaJogo extends TelaBase {
     private void initSons() {
         somTiro = Gdx.audio.newSound(Gdx.files.internal("sounds/shoot.mp3"));
         somExplosao = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
-        somGameOver = Gdx.audio.newSound(Gdx.files.internal("sounds/gameOver.mp3"));
+        somGameOver = Gdx.audio.newSound(Gdx.files.internal("sounds/gameover.mp3"));
         musicaFundo = Gdx.audio.newMusic(Gdx.files.internal("sounds/background.mp3"));
         musicaFundo.setLooping(true);
     }
@@ -226,7 +226,7 @@ public class TelaJogo extends TelaBase {
     }
 
     private void reiniciarJogo() {
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)){
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) ||(Gdx.input.isTouched())){
 
             Preferences preferencias = Gdx.app.getPreferences("SpaceInvaders");
             int  PontuacaoMaxima = preferencias.getInteger("pontuacaoMaxima",0);
@@ -282,7 +282,6 @@ public class TelaJogo extends TelaBase {
                     meteoros.removeValue(meteoro, true); // remove da lista
 
                     criarExplosao(meteoro.getX(), meteoro.getY());
-                    somGameOver.play();
                 }
             }
 
@@ -290,6 +289,7 @@ public class TelaJogo extends TelaBase {
             if (recJogador.overlaps(recMeteoro)){
                 //ocorre colisao do jogador com meteoro 1
                 gameOver = true;
+                    somGameOver.play();
             }
         }
 
@@ -314,10 +314,23 @@ public class TelaJogo extends TelaBase {
 
     }
 
+    private int pontosDificuldade = 0;
+    private int level = 1;
+    private float velocidade = 50;
+    private float velocidade2 = 100;
+
+
     private void atualizarMeteoros(float delta) {
         int quantidadeMeteoros = meteoros1.size + meteoros2.size; //retorna quantidades de meteoros criados
 
-
+        if (pontuacao>50 && pontosDificuldade>100){
+            level ++;
+            velocidade = velocidade +(1*level);
+            velocidade2 = velocidade2 + (2*level);
+            pontosDificuldade = 0;
+        }else{
+            pontosDificuldade++;
+        }
         if (quantidadeMeteoros < 25) {
             int tipo = MathUtils.random(1, 6); //retorna 1 ou 2 aleat�riamente
             if (tipo == 1) {
@@ -339,7 +352,7 @@ public class TelaJogo extends TelaBase {
             }
         }
 
-        float velocidade = 150; // 200 pixels por segundo
+        //float velocidade = 200; // 200 pixels por segundo
         for (Image meteoro : meteoros1){
             float x = meteoro.getX();//atualiza a posicao do meteoro
             float y = meteoro.getY() - velocidade * delta;
@@ -352,7 +365,7 @@ public class TelaJogo extends TelaBase {
             }
         }
 
-        float velocidade2 = 200; //300 pixels por segundo
+        //float velocidade2 = 300; //300 pixels por segundo
         for (Image meteoro : meteoros2){
             float x = meteoro.getX();
             float y = meteoro.getY() - velocidade2 * delta;
@@ -471,7 +484,7 @@ public class TelaJogo extends TelaBase {
             if (posicao.x > meio) {
                 return true;
             }
-        } 
+        }
 
         return false;
     }
